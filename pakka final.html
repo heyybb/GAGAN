@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIRVAA Designs Catalog</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 80px 0 0;
+            padding: 0;
+            background: linear-gradient(45deg, #3494e6, #ec6ead);
+            color: #fff;
+            text-align: center;
+            perspective: 1000px;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            margin-bottom: 40px;
+            font-family: 'Playfair Display', serif;
+            font-size: 3em;
+            letter-spacing: 2px;
+            transform: translateZ(50px);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transform-style: preserve-3d;
+            transform: translateZ(0);
+        }
+
+        .card-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            transform: translateZ(50px);
+        }
+
+        .design-card {
+            position: relative;
+            width: 400px;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transform-style: preserve-3d;
+            animation: bounceIn 0.5s ease-out;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .bigger-box {
+            width: 600px;
+            height: 450px;
+            transform: translateZ(0);
+        }
+
+        .design-card:hover {
+            transform: translateZ(20px) scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 223, 77, 0.8);
+        }
+
+        .design-box {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #3494e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            transition: transform 0.3s;
+        }
+
+        .design-card:hover .design-box {
+            transform: translateY(-100%);
+        }
+
+        .glow {
+            position: absolute;
+            content: "";
+            background: rgba(255, 223, 77, 0.8);
+            z-index: 1;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: glow 1s infinite;
+        }
+
+        .image-preview-container {
+            position: absolute;
+            top: 100%; /* Start off below the design card */
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            transition: top 0.3s;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .design-card:hover .image-preview-container {
+            top: 0; /* Move it up when the design card is hovered */
+        }
+
+        .notification-area {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 4px;
+            display: none;
+        }
+
+        body.no-scroll {
+            overflow: hidden;
+        }
+
+        @keyframes glow {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            0%, 100% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .extra-space {
+            height: 200px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>NIRVAA Designs Catalog</h1>
+
+        <div class="card-container" id="cardContainer">
+            <!-- Design cards will be dynamically added here -->
+        </div>
+
+        <div class="extra-space"></div>
+    </div>
+
+    <div class="notification-area" id="notificationArea">Design Liked! &#10084;</div>
+
+    <script>
+        const designsData = [
+            { name: "Design 1", smallImageUrl: "path/to/smallImage1.jpg", bigImageUrl: "path/to/bigImage1.jpg", smallImageLocked: false, bigImageLocked: false },
+            { name: "Design 2", smallImageUrl: "path/to/smallImage2.jpg", bigImageUrl: "path/to/bigImage2.jpg", smallImageLocked: false, bigImageLocked: false },
+            { name: "Design 3", smallImageUrl: "path/to/smallImage3.jpg", bigImageUrl: "path/to/bigImage3.jpg", smallImageLocked: false, bigImageLocked: false },
+        ];
+
+        // Add your secret key
+        const secretKey = "yourSecretKey";
+
+        function createDesignCard(index, isBiggerBox = false) {
+            const card = document.createElement('div');
+            card.className = 'design-card' + (isBiggerBox ? ' bigger-box' : '');
+
+            const designBox = document.createElement('div');
+            designBox.className = 'design-box';
+
+            const glow = document.createElement('div');
+            glow.className = 'glow';
+
+            const content = document.createElement('div');
+            content.textContent = isBiggerBox ? 'Mockup' : '#' + (index + 1);
+
+            designBox.appendChild(glow);
+            designBox.appendChild(content);
+
+            card.appendChild(designBox);
+
+            const imagePreviewContainer = document.createElement('div');
+            imagePreviewContainer.className = 'image-preview-container';
+            card.appendChild(imagePreviewContainer);
+
+            const imagePreview = document.createElement('img');
+            imagePreview.className = 'image-preview';
+            imagePreviewContainer.appendChild(imagePreview);
+
+            // Add event listener for image selection on hover
+            card.addEventListener('mouseenter', () => {
+                const canUpload = promptImageSelection(index, isBiggerBox);
+                if (!canUpload) {
+                    alert('You do not have permission to change this image.');
+                }
+            });
+
+            return card;
+        }
+
+        function promptImageSelection(index, isBiggerBox) {
+            const imageLockedKey = isBiggerBox ? 'bigImageLocked' : 'smallImageLocked';
+
+            // Check if the image is already locked
+            if (designsData[index][imageLockedKey]) {
+                return false;
+            }
+
+            // Check your secret key
+            const userEnteredKey = prompt('Enter the secret key:');
+
+            // Replace the prompt with a direct comparison
+            if (userEnteredKey === secretKey) {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.style.display = 'none';
+
+                fileInput.addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const imageUrl = URL.createObjectURL(file);
+                        setDesignImage(index, imageUrl, isBiggerBox);
+                        // Lock the image after upload
+                        designsData[index][imageLockedKey] = true;
+                    }
+                });
+
+                document.body.appendChild(fileInput);
+
+                // Trigger the file input
+                fileInput.click();
+
+                // Remove the file input element
+                document.body.removeChild(fileInput);
+
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        function setDesignImage(index, imageUrl, isBiggerBox) {
+            const designCardIndex = isBiggerBox ? index * 2 + 2 : index * 2 + 1;
+            const designCard = document.querySelector(`.design-card:nth-child(${designCardIndex})`);
+            const imagePreview = designCard.querySelector('.image-preview');
+            imagePreview.src = imageUrl;
+        }
+
+        const cardContainer = document.getElementById('cardContainer');
+
+        designsData.forEach((design, index) => {
+            const designCard = createDesignCard(index);
+            cardContainer.appendChild(designCard);
+
+            const biggerBox = createDesignCard(index, true);
+            cardContainer.appendChild(biggerBox);
+        });
+    </script>
+
+</body>
+
+</html>
